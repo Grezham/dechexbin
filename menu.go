@@ -1,9 +1,19 @@
 package main
 
+import "fmt"
+
 type MenuOption struct {
 	text     string
 	selected bool
 	mode     int
+}
+
+func NewMenuOption(text string, mode int) MenuOption {
+	return MenuOption{
+		text:     text,
+		selected: false,
+		mode:     mode,
+	}
 }
 
 /*
@@ -39,12 +49,32 @@ func (m *Menu) PrevOption() {
 	}
 }
 
-func (m Menu) SelectedChoiceMode() int {
+// I Don't know why this doesn't work
+// Selected can't be changed to false for some reason
+func (m *Menu) Reset() {
+	for _, opt := range m.Options {
+		if opt.selected {
+			opt.selected = false
+		}
+	}
+	m.index = 0
+}
+
+func (m *Menu) Select() {
+	m.Options[m.index].selected = true
+}
+
+func (m *Menu) SelectedChoiceMode() int {
 	for _, c := range m.Options {
 		if c.selected {
 			return c.mode
 		}
 	}
 
-	return 0
+	return -1
+}
+
+func (m Menu) Info() string {
+	return fmt.Sprintf("%s\n%v\n%s\n%d\n", m.Name, m.Options, m.Cursor, m.index)
+
 }

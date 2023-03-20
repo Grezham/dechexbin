@@ -1,4 +1,4 @@
-module github.com/Gregzham/dechexbin
+module github.com/Grezham/dechexbin
 
 go 1.19
 

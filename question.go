@@ -46,6 +46,20 @@ func CreateQuestion(qType int, aType int, max int) question {
 	}
 }
 
+func (q *question) Want() string {
+	switch q.answerType {
+	case binary:
+		return fmt.Sprintf("%08b", q.value)
+	case hexadecimal:
+		return fmt.Sprintf("%x", q.value)
+	case decimal:
+		return fmt.Sprintf("%d", q.value)
+	default:
+		return "No Type Found"
+	}
+
+}
+
 type QuestionSet struct {
 	questions []question
 	index     int
@@ -111,6 +125,9 @@ func (qs *QuestionSet) CheckAnswer() {
 		qs.results[qs.index] = true
 	}
 }
+
+//I may not need this. Could just format in View() <- main.go
+//func (qs *QuestionSet) PrintResults(){}
 
 func (qs QuestionSet) isDone() bool {
 	return qs.done
