@@ -1,6 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/charmbracelet/bubbles/textinput"
+)
 
 type MenuOption struct {
 	text string
@@ -12,6 +17,118 @@ func NewMenuOption(text string, mode int) MenuOption {
 		text: text,
 		mode: mode,
 	}
+}
+
+type InputValueInt struct {
+	name      string
+	value     int
+	input     textinput.Model
+	inputType int
+}
+
+func NewInputValueInt(name string, value int, inputType int) InputValueInt {
+
+	return InputValueInt{
+		name:      name,
+		value:     value,
+		input:     textinput.New(),
+		inputType: inputType,
+	}
+}
+
+func ValidSizeValue(value int) bool {
+	return value > 0
+}
+
+func (iv *InputValueInt) ConvertInputValue() bool {
+	if v, err := strconv.ParseInt(iv.input.Value(), 10, 64); err != nil {
+		return false
+	} else {
+		if ValidSizeValue(int(v)) {
+			iv.value = int(v)
+			return true
+		}
+		return false
+	}
+}
+
+func (iv *InputValueInt) Value() int {
+	return iv.value
+}
+
+func (it *InputValueInt) SetValue(value int) {
+	it.value = value
+}
+
+func (it *InputValueInt) Type() int {
+	return it.inputType
+}
+
+func (it *InputValueInt) Name() string {
+	return it.name
+}
+
+type InputToggle struct {
+	name          string
+	value         int
+	toggleOptions []MenuOption
+	toggleIndex   int
+	inputType     int
+}
+
+func NewInputToggle(name string, value int, toggleOptions []MenuOption, inputType int) InputToggle {
+	return InputToggle{
+		name:          name,
+		value:         value,
+		toggleOptions: toggleOptions,
+		toggleIndex:   0,
+		inputType:     inputType,
+	}
+}
+
+func (it *InputToggle) Value() int {
+	return it.value
+}
+
+func (it *InputToggle) SetValue(value int) {
+	it.value = value
+}
+
+func (it *InputToggle) Type() int {
+	return it.inputType
+}
+
+func (it *InputToggle) Name() string {
+	return it.name
+}
+
+func (it *InputToggle) ToggleNext() {
+	it.toggleIndex++
+	if it.toggleIndex >= len(it.toggleOptions) {
+		it.toggleIndex = 0
+	}
+	it.value = it.toggleOptions[it.toggleIndex].mode
+}
+
+func (it *InputToggle) TogglePrev() {
+	it.toggleIndex--
+	if it.toggleIndex < 0 {
+		it.toggleIndex = len(it.toggleOptions) - 1
+	}
+	it.value = it.toggleOptions[it.toggleIndex].mode
+}
+
+func (it *InputToggle) View() string {
+	s := ""
+	for i, t := range it.toggleOptions {
+		if i == it.toggleIndex {
+			s += fmt.Sprintf("{%s}", t.text)
+		} else {
+			s += t.text
+		}
+	}
+
+	return s
 }
 
 type Menu struct {

@@ -60,11 +60,19 @@ func (q *question) Want() string {
 
 }
 
+type SetSettings struct {
+	SetSize      int
+	MaxRange     int
+	QuestionType int
+	AnswerType   int
+}
+
 type QuestionSet struct {
-	questions []question
-	index     int
-	results   []bool
-	done      bool
+	questions   []question
+	index       int
+	results     []bool
+	done        bool
+	setSettings SetSettings
 }
 
 func CreateQuestionSet(setSize int, qType int, aType int, maxRange int) QuestionSet {
@@ -79,7 +87,15 @@ func CreateQuestionSet(setSize int, qType int, aType int, maxRange int) Question
 		}
 		return QuestionSet{
 			questions: qSet,
+			index:     0,
 			results:   marks,
+			done:      false,
+			setSettings: SetSettings{
+				SetSize:      setSize,
+				MaxRange:     maxRange,
+				QuestionType: qType,
+				AnswerType:   aType,
+			},
 		}
 
 	} else {
