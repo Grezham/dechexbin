@@ -53,7 +53,7 @@ type model struct {
 	setMenu     Menu
 	reviewMenu  Menu
 	setSettings SetSettings
-	CurrentMenu *Menu
+	CurrentMenu Menu
 	Set         QuestionSet
 	index       int
 	input       textinput.Model
@@ -72,7 +72,7 @@ func initialModel() model {
 		menu:        CreateMainMenu(),
 		setMenu:     CreateSetMenu(),
 		reviewMenu:  CreateReviewMenu(),
-		CurrentMenu: nil,
+		CurrentMenu: Menu{},
 		setSettings: SetSettings{
 			SetSize:      DefaultSetSize,
 			MaxRange:     DefaultMaxRange,
@@ -84,7 +84,7 @@ func initialModel() model {
 		input: input,
 	}
 
-	nModel.CurrentMenu = &nModel.menu
+	nModel.CurrentMenu = nModel.menu
 	return nModel
 }
 
@@ -109,13 +109,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.mode == MainMenu {
-				m.CurrentMenu.Select()
-				switch m.CurrentMenu.SelectedChoiceMode() {
+				switch m.CurrentMenu.Select() {
 				case NewSet:
 					m.mode = SetMenu
-					m.CurrentMenu.Options[m.CurrentMenu.index].selected = false
-					//m.CurrentMenu.Reset()
-					m.CurrentMenu = &m.setMenu
+					m.CurrentMenu = m.setMenu
 				case Exit:
 					return m, tea.Quit
 				}
@@ -124,8 +121,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if m.mode == SetMenu {
 				m.mode = Quiz
-				m.CurrentMenu.Options[m.CurrentMenu.index].selected = false
-				//m.CurrentMenu.Reset()
 				return m, textinput.Blink
 			}
 
@@ -146,7 +141,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.Set.isDone() {
 					m.mode = ReviewMenu
 					//Resets the Set's done to false and index to 0
-					m.CurrentMenu = &m.reviewMenu
+					m.CurrentMenu = m.reviewMenu
 					return m, cmd
 				} else {
 					return m, cmd
@@ -154,19 +149,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.mode == ReviewMenu {
-				m.CurrentMenu.Select()
 				m.Set.Reset()
-				//m.CurrentMenu.Reset()
-				switch m.CurrentMenu.SelectedChoiceMode() {
+				switch m.CurrentMenu.Select() {
 				case RestartSet:
-					m.CurrentMenu.Options[m.CurrentMenu.index].selected = false
-					//m.CurrentMenu.Reset()
 					m.mode = Quiz
 				case Exit:
-					m.CurrentMenu.Options[m.CurrentMenu.index].selected = false
-					//m.CurrentMenu.Reset()
 					m.mode = MainMenu
-					m.CurrentMenu = &m.menu
+					m.CurrentMenu = m.menu
 				}
 			}
 		}
@@ -211,7 +200,7 @@ func (m model) View() string {
 				s += fmt.Sprintf("%d %s :", i+1, DefaultWrongMark)
 			}
 		}
-		s += fmt.Sprintf("\n%s %s\n\n%d", m.Set.GetCurrentQuestion(), m.input.View(), m.menu.SelectedChoiceMode())
+		s += fmt.Sprintf("\n%s %s\n\n", m.Set.GetCurrentQuestion(), m.input.View())
 		s += fmt.Sprintf("\n%s\n%d", m.CurrentMenu.Info(), m.mode)
 		return s
 
