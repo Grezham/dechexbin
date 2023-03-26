@@ -215,6 +215,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.mode = Quiz
 					m.Set = CreateQuestionSet(SizeInput.value, questionToggle.Value(), answerToggle.Value(), MaxRangeInput.value)
 					return m, textinput.Blink
+				case SetMenu:
+					m.mode = SetMenu
 				case Exit:
 					m.mode = MainMenu
 					m.CurrentMenu = m.menu
@@ -242,23 +244,14 @@ func (m model) View() string {
 			}
 			s += fmt.Sprintf("\t%s\n", opt.text)
 		}
-		//s += fmt.Sprintf("\n%s\n%d", m.CurrentMenu.Info(), m.mode)
 		return s
 
 	case SetMenu:
 		s := fmt.Sprintf("%s\n\n\n", m.CurrentMenu.Name)
-		/*for i, opt := range m.CurrentMenu.Options {
-			if i == m.CurrentMenu.index {
-				s += fmt.Sprintf("[%s]", m.menu.Cursor)
-			}
-			s += fmt.Sprintf("\t%s\n", opt.text)
-		}*/
-
 		s += fmt.Sprintf("%s\n", ViewSetupMenu(SizeInput.name, SizeInput.input.View(), 0, m.CurrentMenu.index, m.CurrentMenu.Cursor))
 		s += fmt.Sprintf("%s\n", ViewSetupMenu(MaxRangeInput.name, MaxRangeInput.input.View(), 1, m.CurrentMenu.index, m.CurrentMenu.Cursor))
 		s += fmt.Sprintf("%s\n", ViewSetupMenu(questionToggle.name, questionToggle.View(), 2, m.CurrentMenu.index, m.CurrentMenu.Cursor))
 		s += fmt.Sprintf("%s\n", ViewSetupMenu(answerToggle.name, answerToggle.View(), 3, m.CurrentMenu.index, m.CurrentMenu.Cursor))
-		//s += fmt.Sprintf("\n%s\n%d", m.CurrentMenu.Info(), m.mode)
 		return s
 
 	case Quiz:
@@ -272,7 +265,6 @@ func (m model) View() string {
 			}
 		}
 		s += fmt.Sprintf("\n%s %s\n\n", m.Set.GetCurrentQuestion(), m.input.View())
-		//s += fmt.Sprintf("\n%s\n%d", m.CurrentMenu.Info(), m.mode)
 		return s
 
 	case ReviewMenu:
@@ -304,7 +296,6 @@ func (m model) View() string {
 			}
 			s += fmt.Sprintf("\t%s\n", opt.text)
 		}
-		//s += fmt.Sprintf("\n%s\n%d", m.CurrentMenu.Info(), m.mode)
 		return s
 
 	default:
@@ -357,10 +348,10 @@ func CreateSetMenu() Menu {
 }
 
 func CreateReviewMenu() Menu {
-	opt := make([]MenuOption, 2)
+	opt := make([]MenuOption, 3)
 	opt[0] = NewMenuOption("Restart Set", RestartSet)
-	opt[1] = NewMenuOption("Exit to MainMenu", Exit)
-
+	opt[1] = NewMenuOption("Set Settings", SetMenu)
+	opt[2] = NewMenuOption("Exit to MainMenu", Exit)
 	return Menu{
 		Name:    "Review Menu",
 		Options: opt,
@@ -370,7 +361,7 @@ func CreateReviewMenu() Menu {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("There's been an error: %v", err)
 		os.Exit(1)

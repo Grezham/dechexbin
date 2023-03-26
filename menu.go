@@ -124,7 +124,7 @@ func (it *InputToggle) View() string {
 		if i == it.toggleIndex {
 			s += fmt.Sprintf("{%s}", t.text)
 		} else {
-			s += t.text
+			s += fmt.Sprintf(" %s ", t.text)
 		}
 	}
 
