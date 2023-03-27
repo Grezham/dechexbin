@@ -1,4 +1,4 @@
-#**DecHexBin**
+#DecHexBin
 ---
 
 DecHexBin(Deciaml Hexadecimal Binary) is tiny TUI Quiz program. Randomly one day I realised I can't read hex or binary and immediately know it's decimal value, so I went online to find some "convert this number" games, and was assualted with ads.
