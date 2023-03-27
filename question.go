@@ -14,17 +14,17 @@ type question struct {
 	answerType int
 }
 
-func CreateQuestion(qType int, aType int, max int) question {
+func CreateQuestion(maxRange int, qType int, aType int) question {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	value := r1.Intn(max-1) + 1
+	value := r1.Intn(maxRange-1) + 1
 	str := ""
 
 	switch qType {
 	case binary:
-		str = fmt.Sprintf("Convert Binary %08b to ", value)
+		str = fmt.Sprintf("Convert Binary 0b%08b to ", value)
 	case hexadecimal:
-		str = fmt.Sprintf("Convert Hexadecimal %x to ", value)
+		str = fmt.Sprintf("Convert Hexadecimal 0x%x to ", value)
 	case decimal:
 		str = fmt.Sprintf("Convert Decimal %d to ", value)
 	}
@@ -75,17 +75,17 @@ type QuestionSet struct {
 	setSettings SetSettings
 }
 
-func CreateQuestionSet(setSize int, qType int, aType int, maxRange int) QuestionSet {
+func CreateQuestionSet(setSize int, maxRange int, qType int, aType int) *QuestionSet {
 	if setSize >= 1 {
 		qSet := make([]question, setSize)
 		marks := make([]bool, setSize)
 
 		for i := 0; i < setSize; i++ {
-			qSet[i] = CreateQuestion(qType, aType, maxRange)
+			qSet[i] = CreateQuestion(maxRange, qType, aType)
 			marks[i] = false
 
 		}
-		return QuestionSet{
+		return &QuestionSet{
 			questions: qSet,
 			index:     0,
 			results:   marks,
@@ -99,7 +99,7 @@ func CreateQuestionSet(setSize int, qType int, aType int, maxRange int) Question
 		}
 
 	} else {
-		return QuestionSet{}
+		return &QuestionSet{}
 	}
 }
 
@@ -153,4 +153,15 @@ func (qs *QuestionSet) Reset() {
 	qs.index = 0
 	qs.done = false
 	qs.results = make([]bool, len(qs.results))
+}
+
+func (qs *QuestionSet) Restart() {
+	qs.Reset()
+	sSize := qs.setSettings.SetSize
+	tmpq := make([]question, sSize)
+	for i := 0; i < sSize; i++ {
+		tmpq[i] = CreateQuestion(qs.setSettings.MaxRange, qs.setSettings.QuestionType, qs.setSettings.AnswerType)
+
+	}
+	qs.questions = tmpq
 }

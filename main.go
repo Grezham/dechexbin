@@ -19,8 +19,7 @@ const (
 )
 
 const (
-	MainMenu = iota + 1
-	SetMenu
+	SetMenu = iota + 1
 	Quiz
 	ReviewMenu
 	NewSet
@@ -50,16 +49,16 @@ var (
 	SizeInput      = NewInputValueInt("Set Size", DefaultSetSize, 0)
 	MaxRangeInput  = NewInputValueInt("Max", DefaultMaxRange, 0)
 	questionToggle = NewInputToggle("Queston Type", decimal, []MenuOption{decimalOption, hexadecimalOption, binaryOption}, 0)
-	answerToggle   = NewInputToggle("Answer Type", hexadecimal, []MenuOption{decimalOption, hexadecimalOption, binaryOption}, 0)
+	answerToggle   = NewInputToggle("Answer Type", decimal, []MenuOption{decimalOption, hexadecimalOption, binaryOption}, 0)
 )
 
 type model struct {
-	mode        int
-	menu        Menu
+	mode int
+	//menu        Menu
 	setMenu     Menu
 	reviewMenu  Menu
 	CurrentMenu Menu
-	Set         QuestionSet
+	Set         *QuestionSet
 	index       int
 	input       textinput.Model
 }
@@ -73,22 +72,23 @@ func initialModel() model {
 	input.Focus()
 
 	nModel := model{
-		mode:        MainMenu,
-		menu:        CreateMainMenu(),
+		mode: SetMenu,
+		//menu:        CreateMainMenu(),
 		setMenu:     CreateSetMenu(),
 		reviewMenu:  CreateReviewMenu(),
 		CurrentMenu: Menu{},
-		Set:         qSet,
+		Set:         &qSet,
 		index:       0,
 		input:       input,
 	}
 
-	nModel.CurrentMenu = nModel.menu
+	nModel.CurrentMenu = nModel.setMenu
+	SizeInput.input.Focus()
 	return nModel
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -99,6 +99,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "esc", "ctrl+c":
 			return m, tea.Quit
+
+		case "r":
+			if m.mode == Quiz {
+				m.Set.Restart()
+				m.input.Reset()
+				return m, textinput.Blink
+			} else if m.mode == ReviewMenu {
+				m.Set.Restart()
+				m.input.Reset()
+				m.mode = Quiz
+				return m, textinput.Blink
+			}
+
+		case "s":
+			if m.mode == Quiz {
+				m.mode = SetMenu
+				m.CurrentMenu = m.setMenu
+			} else if m.mode == ReviewMenu {
+				m.mode = SetMenu
+				m.CurrentMenu = m.setMenu
+			}
 
 		case "up":
 			m.CurrentMenu.PrevOption()
@@ -153,7 +174,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter":
-			if m.mode == MainMenu {
+			/*if m.mode == MainMenu {
 				switch m.CurrentMenu.Select() {
 				case NewSet:
 					m.mode = SetMenu
@@ -163,14 +184,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, tea.Quit
 				}
 				return m, nil
-			}
+			}*/
 
 			if m.mode == SetMenu {
 				//Remember to create something to randomize set if restarting from review
 				validsize := SizeInput.ConvertInputValue()
 				validRange := MaxRangeInput.ConvertInputValue()
 				if validsize && validRange {
-					m.Set = CreateQuestionSet(SizeInput.value, questionToggle.Value(), answerToggle.Value(), MaxRangeInput.value)
+					m.Set = CreateQuestionSet(SizeInput.value, MaxRangeInput.value, questionToggle.Value(), answerToggle.Value())
 					m.mode = Quiz
 				}
 				if !validsize {
@@ -213,14 +234,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.CurrentMenu.Select() {
 				case RestartSet:
 					m.mode = Quiz
-					m.Set = CreateQuestionSet(SizeInput.value, questionToggle.Value(), answerToggle.Value(), MaxRangeInput.value)
+					m.Set = CreateQuestionSet(SizeInput.value, MaxRangeInput.value, questionToggle.Value(), answerToggle.Value())
 					return m, textinput.Blink
 				case SetMenu:
 					m.mode = SetMenu
-				case Exit:
-					m.mode = MainMenu
-					m.CurrentMenu = m.menu
+					m.CurrentMenu = m.setMenu
 				}
+
 			}
 		}
 	}
@@ -235,16 +255,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 
 	switch m.mode {
-	case MainMenu:
-		s := fmt.Sprintf("%s\n\n\n", m.CurrentMenu.Name)
-		for i, opt := range m.CurrentMenu.Options {
+	/*case MainMenu:
+	s := fmt.Sprintf("%s\n\n\n", m.CurrentMenu.Name)
+	for i, opt := range m.CurrentMenu.Options {
 
-			if i == m.CurrentMenu.index {
-				s += fmt.Sprintf("[%s]", m.menu.Cursor)
-			}
-			s += fmt.Sprintf("\t%s\n", opt.text)
+		if i == m.CurrentMenu.index {
+			s += fmt.Sprintf("[%s]", m.menu.Cursor)
 		}
-		return s
+		s += fmt.Sprintf("\t%s\n", opt.text)
+	}
+	return s
+	*/
 
 	case SetMenu:
 		s := fmt.Sprintf("%s\n\n\n", m.CurrentMenu.Name)
@@ -290,12 +311,12 @@ func (m model) View() string {
 		//Just need some space between results and options
 		s += "\n"
 
-		for i, opt := range m.CurrentMenu.Options {
+		/*for i, opt := range m.CurrentMenu.Options {
 			if i == m.CurrentMenu.index {
-				s += fmt.Sprintf("[%s]", m.menu.Cursor)
+				s += fmt.Sprintf("[%s]", m.CurrentMenu.Cursor)
 			}
 			s += fmt.Sprintf("\t%s\n", opt.text)
-		}
+		}*/
 		return s
 
 	default:
@@ -320,6 +341,7 @@ func UpdateInputs(msg tea.Msg) tea.Cmd {
 }
 
 // Menus
+/*
 func CreateMainMenu() Menu {
 	opt := make([]MenuOption, 2)
 	opt[0] = NewMenuOption("New Set", NewSet)
@@ -330,7 +352,7 @@ func CreateMainMenu() Menu {
 		Cursor:  DefaultCursor,
 		index:   0,
 	}
-}
+}*/
 
 func CreateSetMenu() Menu {
 	opt := make([]MenuOption, 4)
@@ -348,10 +370,9 @@ func CreateSetMenu() Menu {
 }
 
 func CreateReviewMenu() Menu {
-	opt := make([]MenuOption, 3)
+	opt := make([]MenuOption, 2)
 	opt[0] = NewMenuOption("Restart Set", RestartSet)
 	opt[1] = NewMenuOption("Set Settings", SetMenu)
-	opt[2] = NewMenuOption("Exit to MainMenu", Exit)
 	return Menu{
 		Name:    "Review Menu",
 		Options: opt,
